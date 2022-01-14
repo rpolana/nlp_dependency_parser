@@ -1,3 +1,18 @@
+#!/usr/bin/env python3
+"""nlp_dependency_parser:
+Create dependency parser diagram and display over http
+    Requirements:
+        Using spacy, displayc and nltk
+    Design/Implementation:
+"""
+__author__ = "Ramprasad Polana"
+__email__ = "rpolana@yahoo.com"
+__license__ = "Unlicense: See the accompanying LICENCE file for details"
+__copyright__ = "Anti-Copyright Waiver: The author of this work hereby waives all claim of copyright (economic and moral) in this work and immediately places it in the public domain; it may be used, distorted or destroyed in any manner whatsoever without further attribution or notice to the creator."
+__date__ = "Jan 2022"
+__version__ = "1.0"
+__status__ = "Development"
+
 import logging
 import os.path
 
