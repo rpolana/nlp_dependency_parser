@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Dependency Parser</title>
+</head>
+<body>
+    <form method="POST">
+        <div class="form-row">
+            <div class="form-group col-md-6">
+                {{ parse_form.csrf_token() }}
+                <label for="parse_form_text"> {{ parse_form.text.label }}</label>
+                {{ parse_form.text(id="parse_form_text", cols="60", rows="2") }}
+            </div>
+            <div class="form-group">
+                {{ parse_form.submit(class="btn btn-primary", value="Parse It ...")}}
+            </div>
+            <!--
+            <input name="text">
+            <textarea name="text"></textarea>
+            <input type="submit">
+            -->
+        </div>
+    </form>
+    {% if svg_filename is defined: %}
+        <img src="{{url_for(static_dir, filename=svg_filename)}}" alt="Dependency Tree">
+    {% endif %}
+</body>
+</html>
