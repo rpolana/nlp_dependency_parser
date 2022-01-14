@@ -1,3 +1,4 @@
 images/
-static/*
+static/images/*
 venv
+.idea/
