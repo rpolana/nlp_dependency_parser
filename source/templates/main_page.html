@@ -22,7 +22,8 @@
         </div>
     </form>
     {% if svg_filename is defined: %}
-        <img src="{{url_for(static_dir, filename=svg_filename)}}" alt="Dependency Tree">
+        <img src="{{url_for(static_url, filename=svg_filename)}}" alt="Dependency Tree">
+        <!--- <img src="{{svg_filename}}" alt="Dependency Tree"> -->
     {% endif %}
 </body>
 </html>

@@ -14,27 +14,35 @@ __version__ = "1.0"
 __status__ = "Development"
 
 import logging
-import os.path
+import os
+import pprint
+import sys
+import argparse
+logger = logging.getLogger(__file__)
+logger.setLevel('DEBUG')  # ('INFO')
+logger.addHandler(logging.StreamHandler())
 
 
 from flask import Flask, request, render_template
 # from flask_ngrok import run_with_ngrok
 from flask_wtf import FlaskForm
-from wtformsparsleyjs import StringField, TextAreaField
+# from wtformsparsleyjs import StringField, TextAreaField
+from wtforms import StringField, TextAreaField
 from wtforms import SubmitField
 # from wtforms.widgets import TextArea
 from wtforms.validators import ValidationError, DataRequired, Length
 import secrets
 import dependency_parser
 
-IMAGES_DIR = r'images'
-STATIC_URL_PREFIX = r'static'
+STATIC_URL = r'static'
+STATIC_FOLDER = r'../static'  # the static content to be kept outside the source code
+IMAGES_DIR = r'images'  # this is the subdirectory under STATIC_FOLDER where images are stored
 MIN_NAME_LENGTH = 3
 MAX_NAME_LENGTH = 100
 MIN_TEXT_LENGTH = 3
 MAX_TEXT_LENGTH = 5000
 
-app = Flask(__name__, static_url_path=r'/' + STATIC_URL_PREFIX)
+app = Flask(__name__, static_url_path=r'/' + STATIC_URL, static_folder=STATIC_FOLDER)  #  + STATIC_URL_PREFIX)
 # wtf_csrf_secret_key = secrets.token_hex(16)
 wtf_csrf_secret_key = secrets.token_urlsafe(16)
 # dynamic key on every startup (login sessions across startups will not work)
@@ -44,6 +52,14 @@ app.config['SECRET_KEY'] = wtf_csrf_secret_key
 
 @app.route('/check')
 def check():
+    print(request.headers)
+    print(request.data)
+    print(request.args)
+    print(request.form)
+    print(request.endpoint)
+    print(request.method)
+    print(request.remote_addr)
+    pprint.pformat(request.__dict__, depth=5)
     return 'nlp_dependency_parser is working..'
 
 
@@ -84,15 +100,20 @@ def parse():
     if parse_form.validate_on_submit():
         text = parse_form.text.data
         logging.getLogger(f'nlp_dependency_parser: calling parse with input <{text}>')
-        svg_filename = dependency_parser.parse(text)
+        svg_filename = dependency_parser.parse(text, os.path.join(STATIC_FOLDER, IMAGES_DIR))
         svg_filename = IMAGES_DIR + r'/' + os.path.basename(svg_filename)
+        # svg_filename = os.path.basename(svg_filename)
         logging.getLogger(f'nlp_dependency_parser: displaying dependency tree in file <{svg_filename}>')
         print(f'nlp_dependency_parser: displaying dependency tree in file <{svg_filename}>')
-        return render_template("main_page.html", parse_form=parse_form, static_dir=STATIC_URL_PREFIX, svg_filename=svg_filename)
+        return render_template("main_page.html", parse_form=parse_form, static_url=STATIC_URL, svg_filename=svg_filename)
     else:
         return render_template("main_page.html", parse_form=parse_form)
 
 
 if __name__ == '__main__':
-    app.debug = False  # turn on in production
+    logger.info(f'***Running {sys.argv[0]} with arguments: {sys.argv[1:]}')
+    logger.debug(f'**Current working directory: {os.getcwd()}')
+    logger.debug(f'**Path for loading python modules: {sys.path}')
+
+    app.debug = True  # turn on in production
     app.run()

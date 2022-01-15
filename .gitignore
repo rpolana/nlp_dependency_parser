@@ -1,4 +1,6 @@
+data/
 images/
 static/images/*
 venv
 .idea/
+nltk_data/*

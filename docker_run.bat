@@ -1,0 +1,1 @@
+docker run --detach -p 5000:5000 -v C:\Users\00004798\MEGA_rpolana\Programs\PyCharmProjects\nlp_dependency_parser\source:/opt/app --name=parser parser

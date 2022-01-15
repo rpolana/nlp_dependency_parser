@@ -6,6 +6,8 @@ from pathlib import Path
 # import asyncio
 # import threading
 import logging
+logging.getLogger().setLevel('DEBUG')  # ('INFO')
+logging.getLogger().addHandler(logging.StreamHandler())
 
 # spaCy Code Initialization:
 import spacy
@@ -15,6 +17,7 @@ import benepar
 # from benepar.spacy_plugin import BeneparComponent
 # from benepar import BeneparComponent, NonConstituentException
 import nltk
+import nltk.downloader
 from nltk import Tree
 from nltk.tokenize import word_tokenize
 from nltk.tag import pos_tag
@@ -23,7 +26,7 @@ from nltk.stem import WordNetLemmatizer
 # from nltk.stem.snowball import SnowballStemmer
 from nltk.stem.porter import *
 
-IMAGES_DIR = r'static\images'
+IMAGES_DIR = r'../static/images'
 
 
 def exception_retry(e_type, f, on_exception_f, max_retries=1, logger=None):
@@ -53,44 +56,70 @@ def setup_spacy():
     # spacy initialization
     try:
         nlp = spacy.load('en_core_web_sm')
-        add_pipe_benepar(nlp)
+        init_benepar(nlp)
     except OSError as e:
         # download('en')
+        logging.getLogger().info(f'downloading spacy en_core_web_sm')
         spacy.cli.download('en_core_web_sm')
         nlp = spacy.load('en_core_web_sm')
-        add_pipe_benepar(nlp)
+        init_benepar(nlp)
     return nlp
 
 
 def setup():
+    global nlp
     # NLTK Code Initialization:
     try:
         nltk.data.find('tokenizers/punkt')
     except LookupError:
+        logging.getLogger().info(f'downloading nltk punkt')
         nltk.download('punkt')
     try:
         nltk.data.find('taggers/averaged_perceptron_tagger')
     except LookupError:
+        logging.getLogger().info(f'downloading nltk averaged_perceptron_tagger')
         nltk.download('averaged_perceptron_tagger')
     try:
         nltk.data.find('wordnet')
     except LookupError:
+        logging.getLogger().info(f'downloading nltk wordnet')
         nltk.download('wordnet')
     try:
         nltk.data.find('corpora/stopwords')
     except LookupError:
+        logging.getLogger().info(f'downloading nltk stopwords')
         nltk.download('stopwords')
+    try:
+        nltk.data.find('corpora/omw-1.4')
+    except LookupError:
+        logging.getLogger().info(f'downloading nltk omw-1.4')
+        nltk.download('omw-1.4')
 
-    # initialize benepar
+    nlp = setup_spacy()
+    # logging.getLogger().info(f'spacy pipeline component names: {nlp.pipe_names}')
+    # logging.getLogger().info(f'spacy component_names names: {nlp.component_names}')
+    init_benepar(nlp)
+
+    return nlp
+
+
+# initialize benepar
+def init_benepar(nlp):
     try:
         add_pipe_benepar(nlp)
+    except ValueError as ve:
+        # this means benepar is already in the pipeline
+        logging.getLogger().info(f'spacy already has benepar')
     except Exception as e:
+        logging.getLogger().info(f'downloading benepar_en3 model')
         benepar.download('benepar_en3')
         add_pipe_benepar(nlp)
 
-    return setup_spacy()
 
 def add_pipe_benepar(nlp):
+    if 'benepar' in nlp.pipe_names:
+        logging.getLogger().info(f'spacy already has benepar')
+        return
     if spacy.__version__.startswith('2'):
         nlp.add_pipe(benepar.BeneparComponent("benepar_en3"))
         logging.getLogger().info(f'benepar_en3 component added to spacy {spacy.__version__} pipeline')
@@ -128,7 +157,7 @@ def tokenization(input_text, tool='spacy'):
 
 def lemmatization(input_text, tool='spacy', spacy_doc=None, nltk_tokens=None):
     global p_stemmer, wordnet_lemmatizer
-    global spacy_doc, nlp
+    global nlp
     if tool == 'spacy':
         # spaCy
         if spacy_doc is None:
@@ -177,7 +206,7 @@ def remove_punctuation(input_text, tool = 'spacy', spacy_filtered=None, nltk_fil
         return []
 
 def get_POS(input_text, tool='spacy', spacy_doc=None, nltk_tokens=None):
-    global spacy_doc, nlp
+    global nlp
     if tool == 'spacy':
         # spaCy
         if spacy_doc is None:
@@ -240,12 +269,12 @@ def displayc_serve(spacy_doc):
             displacy.serve(spacy_doc, style='dep', host="localhost", port=free_port)
 
 
-def process_text(input_text, input_number, unique_file_suffix):
+def process_text(input_text, input_number, images_dir, unique_file_suffix):
     print(f'***Input text {input_number}: ')
     print(input_text)
     global nlp, spacy_sentences
     if nlp is None:
-        nlp = setup_spacy()
+        nlp = setup()
     spacy_doc = nlp(input_text)
     spacy_tokens = tokenization(input_text, 'spacy')
     print('Spacy Tokens:')
@@ -260,7 +289,9 @@ def process_text(input_text, input_number, unique_file_suffix):
     # displacy_thread = threading.Thread(target=displayc_serve, args=[spacy_doc])
     # displacy_thread.start()
     svg = displacy.render(spacy_doc, style='dep', jupyter=False, options={'distance': 80})  # , style="dep")
-    svg_filename = os.path.join(IMAGES_DIR, f'displayc_{input_number}_{unique_file_suffix}.svg')
+    if not os.path.exists(images_dir):
+        os.makedirs(images_dir)
+    svg_filename = os.path.join(images_dir, f'displayc_{input_number}_{unique_file_suffix}.svg')
     with Path(svg_filename).open("w", encoding="utf-8") as fh:
         print(f'Saving svg file of displacy render into {svg_filename}')
         fh.write(svg)
@@ -302,10 +333,10 @@ def process_text(input_text, input_number, unique_file_suffix):
     return svg_filename
 
 
-def parse(input_text):
+def parse(input_text, images_dir):
     input_number = 1
     # import tempfile
     # unique_file_suffix = next(tempfile._get_candidate_names()) # required to ensure output files created run to run will not conflict
     import uuid
     unique_file_suffix = uuid.uuid4().hex # required to ensure output files created run to run will not conflict
-    return process_text(input_text, input_number, unique_file_suffix)
+    return process_text(input_text, input_number, images_dir, unique_file_suffix)
