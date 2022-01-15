@@ -1,10 +1,10 @@
 import logging
 import os.path
 
-from IPython.display import display, Image
+# from IPython.display import display, Image
 from pathlib import Path
-import asyncio
-import threading
+# import asyncio
+# import threading
 import logging
 
 # spaCy Code Initialization:
@@ -20,7 +20,7 @@ from nltk.tokenize import word_tokenize
 from nltk.tag import pos_tag
 from nltk.corpus import stopwords
 from nltk.stem import WordNetLemmatizer
-from nltk.stem.snowball import SnowballStemmer
+# from nltk.stem.snowball import SnowballStemmer
 from nltk.stem.porter import *
 
 IMAGES_DIR = r'static\images'
@@ -49,6 +49,7 @@ def exception_retry(e_type, f, on_exception_f, max_retries=1, logger=None):
 
 
 def setup_spacy():
+    global nlp
     # spacy initialization
     try:
         nlp = spacy.load('en_core_web_sm')
@@ -80,7 +81,6 @@ def setup():
     except LookupError:
         nltk.download('stopwords')
 
-
     # initialize benepar
     try:
         add_pipe_benepar(nlp)
@@ -99,7 +99,7 @@ def add_pipe_benepar(nlp):
         logging.getLogger().info(f'benepar_en3 model added to spacy {spacy.__version__} pipeline')
 
 
-
+nlp = None
 spacy_doc = None
 spacy_sentences = None
 
@@ -110,7 +110,7 @@ wordnet_lemmatizer = WordNetLemmatizer()
 
 
 def tokenization(input_text, tool='spacy'):
-    global spacy_doc
+    global spacy_doc, nlp
     if tool == 'spacy':
         # spaCy
         if spacy_doc is None:
@@ -128,6 +128,7 @@ def tokenization(input_text, tool='spacy'):
 
 def lemmatization(input_text, tool='spacy', spacy_doc=None, nltk_tokens=None):
     global p_stemmer, wordnet_lemmatizer
+    global spacy_doc, nlp
     if tool == 'spacy':
         # spaCy
         if spacy_doc is None:
@@ -147,6 +148,7 @@ def lemmatization(input_text, tool='spacy', spacy_doc=None, nltk_tokens=None):
 
 
 def remove_stopwords(input_text, tool = 'spacy', spacy_lemmas=None, nltk_lemmas=None):
+    global spacy_doc, nlp
     if tool == 'spacy':
         def spacy_lexeme(word):
             lexeme = nlp.vocab[word]
@@ -175,6 +177,7 @@ def remove_punctuation(input_text, tool = 'spacy', spacy_filtered=None, nltk_fil
         return []
 
 def get_POS(input_text, tool='spacy', spacy_doc=None, nltk_tokens=None):
+    global spacy_doc, nlp
     if tool == 'spacy':
         # spaCy
         if spacy_doc is None:
@@ -232,17 +235,15 @@ def displayc_serve(spacy_doc):
         try:
             displacy.serve(spacy_doc, style='dep', host="localhost", port=free_port)
         except:
-            with socketserver.TCPServer(("localhost", 0), None) as s:
-                free_port = s.server_address[1]
+            with socketserver.TCPServer(("localhost", 0), None) as s2:
+                free_port = s2.server_address[1]
             displacy.serve(spacy_doc, style='dep', host="localhost", port=free_port)
 
-
-nlp = None
 
 def process_text(input_text, input_number, unique_file_suffix):
     print(f'***Input text {input_number}: ')
     print(input_text)
-    global nlp
+    global nlp, spacy_sentences
     if nlp is None:
         nlp = setup_spacy()
     spacy_doc = nlp(input_text)

@@ -1,6 +1,10 @@
 # This file is used by pip to install required python packages
 # Usage: pip install -r requirements.txt
 
+-f https://download.pytorch.org/whl/torch_stable.html
+torch==1.10.1+cpu
+
+
 # Flask Framework
 Flask~=2.0.2
 
@@ -14,4 +18,3 @@ wtforms~=3.0.1
 WTForms-ParsleyJS~=2.0.1
 benepar~=0.2.0
 nltk~=3.6.5
-ipython~=7.29.0

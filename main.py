@@ -56,7 +56,7 @@ def greet():
 
     def validate_text(self, text):
         excluded_chars = r"*^+=}{#~|"
-        for char in self.text.data:
+        for char in text.data:
             if char in excluded_chars:
                 raise ValidationError(f"Character {char} is not allowed in input text.")
     form = GreetUserForm()
@@ -94,5 +94,5 @@ def parse():
 
 
 if __name__ == '__main__':
-    app.debug = True # TODO: turn off in production
+    app.debug = False  # turn on in production
     app.run()

@@ -7,10 +7,10 @@ name = "pypi"
 spacy = "~=3.2.0"
 benepar = "~=0.2.0"
 nltk = "~=3.6.5"
-ipython = "~=7.29.0"
 Flask = "~=2.0.2"
 WTForms = "~=3.0.1"
 WTForms-ParsleyJS = "~=2.0.1"
+gunicorn = "*"
 
 [dev-packages]
 
